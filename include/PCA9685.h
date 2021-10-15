@@ -20,13 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef TEMPLATE_H_CA9061D2_6248_4045_B8A2_208A2EDF229D
-#define TEMPLATE_H_CA9061D2_6248_4045_B8A2_208A2EDF229D
+#ifndef PCA9685_H_0D1184C8_B49E_455E_9343_0CE072650263
+#define PCA9685_H_0D1184C8_B49E_455E_9343_0CE072650263
 
-#include <cstdint>
+/**
+ * Datasheet
+ * https://cdn-shop.adafruit.com/datasheets/PCA9685.pdf
+ */
 
-namespace template {
-class template {
+namespace PCA9685Lib {
+class PCA9685 {
+
+public:
+
+    static const int DEFAULT_DEVICE = 0;
+    static const int DEFAULT_ADDRESS = 0x40;
+    static const int DEFAULT_FLAGS = 0;
+
+    PCA9685(
+        const int device = DEFAULT_DEVICE,
+        const int address = DEFAULT_ADDRESS,
+        const int flags = DEFAULT_FLAGS) noexcept;
+
+    virtual ~PCA9685();
+    void connect();
+    void disconnect();
+
+    
+
+
+protected:
+    int _handle;
+    int _device;
+    int _address;
+    int _flags;
 
 };
 };

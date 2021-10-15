@@ -20,10 +20,55 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "../include/template.h"
+#include "../include/PCA9685.h"
 #include <cstdint>
 #include <lgpio.h>
+#include <stdexcept>
 
-namespace template {
+namespace PCA9685Lib {
+
+PCA9685::PCA9685(const int device, const int address, const int flags) noexcept :
+    _handle(-1),
+    _device(device),
+    _address(address),
+    _flags(flags) {
+}
+
+PCA9685::~PCA9685() {
+    this->disconnect();
+}
+
+void PCA9685::connect() {
+
+    if(this->_handle >= 0) {
+        return;
+    }
+
+    if((this->_handle = ::lgI2cOpen(
+        this->_device,
+        this->_address,
+        this->_flags)) < 0) {
+            throw std::runtime_error("failed to connect to device");
+    }
+
+}
+
+void PCA9685::disconnect() {
+
+    if(this->_handle < 0) {
+        return;
+    }
+
+    if(::lgI2cClose(this->_handle) < 0) {
+        throw std::runtime_error("failed to disconnect device");
+    }
+
+    this->_handle = -1;
+
+}
+
+
+
+
 
 };
