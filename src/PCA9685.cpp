@@ -207,9 +207,14 @@ void PCA9685::_writeReg(const std::uint8_t reg, const std::uint8_t val) {
 }
 
 std::uint8_t PCA9685::_prescale_value(const unsigned int osc_clock, const unsigned int update_rate) noexcept {
+    
     //datasheet pg. 25
+    const int uncapped = std::round(
+        static_cast<double>(osc_clock) / (4096 * update_rate)) - 1);
+    
     return static_cast<std::uint8_t>(
-        std::round(static_cast<double>(osc_clock) / (4096 * update_rate)) - 1);
+        std::max(std::min(prescale, MAX_PRESCALE), MIN_PRESCALE));
+
 }
 
 LedRegister PCA9685::_getLedRegister(const std::uint8_t channel) const noexcept {

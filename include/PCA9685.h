@@ -317,6 +317,8 @@ public:
     static const std::uint8_t PRE_SCALE_REGISTER = 0xfe;
 
     static const unsigned int OSCILLATOR_HZ = 25000000;
+    static const std::uint8_t MIN_PRESCALE = 3;
+    static const std::uint8_t MAX_PRESCALE = 255;
 
     static const int DEFAULT_I2C_DEVICE = 0;
     static const int DEFAULT_I2C_ADDRESS = 0x40;
@@ -344,9 +346,25 @@ public:
     Channel getAllChannels();
     unsigned int getFrequency();
 
-    void setChannel(const std::uint8_t channel, const unsigned short on, const unsigned short off);
+    void setChannelOn(const std::uint8_t channel);
+    void setChannelOff(const std::uint8_t channel);
+    void setChannelPWM(const std::uint8_t channel, const std::uint16_t pwm);
+
+    void setAllChannelsOn();
+    void setAllChannelsOff();
+    void setAllChannelsPWM(const std::uint16_t pwm);
+
+    std::uint16_t getChannelPWM(const std::uint8_t channel);
+
+
     void setAllChannels(const unsigned short on, const unsigned short off);
     void setFrequency(const unsigned int hz);
+
+    void enableSubAddress(const std::uint8_t addrNum, const std::uint8_t addr);
+    void disableSubAddress(const std::uint8_t addrNum);
+
+    void enableAllCallAddress(const std::uint8_t addr);
+    void disableAllCallAddress();
 
     static void reset_all(const int device = DEFAULT_I2C_DEVICE);
 
