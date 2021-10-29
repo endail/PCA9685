@@ -256,36 +256,36 @@ public:
             _offLow(offL) {
         }
 
-    unsigned short getOn() const noexcept {
-        return static_cast<unsigned short>(this->_onHigh & 0b00111111) |
-            static_cast<unsigned short>(this->_onLow);
+    std::uint16_t getOn() const noexcept {
+        return static_cast<std::uint16_t>(this->_onHigh & 0b00111111) |
+            static_cast<std::uint16_t>(this->_onLow);
     }
 
-    unsigned short getOff() const noexcept {
-        return static_cast<unsigned short>(this->_offHigh * 0b00111111) |
-            static_cast<unsigned short>(this->_offLow);
+    std::uint16_t getOff() const noexcept {
+        return static_cast<std::uint16_t>(this->_offHigh * 0b00111111) |
+            static_cast<std::uint16_t>(this->_offLow);
     }
 
-    void setOn(const unsigned short on) noexcept {
+    void setOn(const std::uint16_t on) noexcept {
         this->_onHigh = (on >> 8) & 0b00111111;
         this->_onLow = on & 0xff;
     }
 
     void setOn(const std::uint8_t h, const std::uint8_t l) noexcept {
         this->setOn(
-            (static_cast<unsigned short>(h & 0b00111111) << 8) |
-            static_cast<unsigned short>(l));
+            (static_cast<std::uint16_t>(h & 0b00111111) << 8) |
+            static_cast<std::uint16_t>(l));
     }
 
-    void setOff(const unsigned short off) noexcept {
+    void setOff(const std::uint16_t off) noexcept {
         this->_offHigh = (off >> 8) & 0b00111111;
         this->_offLow = off & 0xff;
     }
 
     void setOff(const std::uint8_t h, const std::uint8_t l) noexcept {
         this->setOff(
-            (static_cast<unsigned short>(h & 0b00111111) << 8) |
-            static_cast<unsigned short>(l));
+            (static_cast<std::uint16_t>(h & 0b00111111) << 8) |
+            static_cast<std::uint16_t>(l));
     }
 
     void setOnH(const std::uint8_t h) noexcept {
