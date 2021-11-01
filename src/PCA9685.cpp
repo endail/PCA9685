@@ -22,6 +22,7 @@
 
 #include "../include/PCA9685.h"
 #include <algorithm>
+#include <bitset>
 #include <chrono>
 #include <cstdint>
 #include <lgpio.h>
@@ -29,6 +30,19 @@
 #include <thread>
 
 namespace PCA9685Lib {
+
+Register::Register() noexcept :
+    Register(0) { }
+
+Register::Register(const std::uint8_t v) noexcept :
+    std::bitset<8>(v) { }
+
+Register::Register(const std::bitset<8>& bs) noexcept :
+    Register(static_cast<std::uint8_t>(bs.to_ulong())) { }
+
+std::uint8_t Register::toByte() const noexcept {
+    return static_cast<std::uint8_t>(this->to_ulong());
+}
 
 PCA9685::PCA9685(const int device, const int address, const int flags) noexcept :
     _handle(-1),
@@ -38,7 +52,14 @@ PCA9685::PCA9685(const int device, const int address, const int flags) noexcept 
 }
 
 PCA9685::~PCA9685() {
-    this->disconnect();
+    
+    try {
+        this->disconnect();
+    }
+    catch(...) {
+        //prevent propagation
+    }
+
 }
 
 void PCA9685::connect() {
@@ -70,63 +91,49 @@ void PCA9685::disconnect() {
 
 }
 
-Channel PCA9685::getChannel(const std::uint8_t channel) {
+void PCA9685::getChannel(const std::uint8_t channel, std::uint16_t* const on, std::uint16_t* const off) {
 
     const auto reg = _getLedRegister(channel);
 
-    const auto onH = ::lgI2cReadByteData(this->_handle, reg.getOnH());
-    const auto onL = ::lgI2cReadByteData(this->_handle, reg.getOnL());
-    const auto offH = ::lgI2cReadByteData(this->_handle, reg.getOffH());
-    const auto offL = ::lgI2cReadByteData(this->_handle, reg.getOffL());
+    const auto onH = this->_readReg(reg.getOnH());
+    const auto onL = this->_readReg(reg.getOnL());
+    const auto offH = this->_readReg(reg.getOffH());
+    const auto offL = this->_readReg(reg.getOffL());
 
     if(onH < 0 || onL < 0 || offH < 0 || offL < 0) {
         throw std::runtime_error("failed to read channel data");
     }
 
-    return Channel(
-        static_cast<std::uint8_t>(onH),
-        static_cast<std::uint8_t>(onL),
-        static_cast<std::uint8_t>(offH),
-        static_cast<std::uint8_t>(offL));
+    on = static_cast<std::uint16_t>(onH) << 8 |
+        static_cast<std::uint16_t>(onL);
+
+    off = static_cast<std::uint16_t>(offH) << 8 |
+        static_cast<std::uint16_t>(offL);
 
 }
 
-Channel PCA9685::getAllChannels() {
+void PCA9685::getAllChannels(std::uint16_t* const on, std::uint16_t* const off) {
 
-    const auto onH = ::lgI2cReadByteData(this->_handle, ALL_LED_BASE_REGISTER);
-    const auto onL = ::lgI2cReadByteData(this->_handle, ALL_LED_BASE_REGISTER + 1);
-    const auto offH = ::lgI2cReadByteData(this->_handle, ALL_LED_BASE_REGISTER + 2);
-    const auto offL = ::lgI2cReadByteData(this->_handle, ALL_LED_BASE_REGISTER + 3);
+    const auto onH = this->_readReg(ALL_LED_BASE_REGISTER);
+    const auto onL = this->_readReg(ALL_LED_BASE_REGISTER + 1);
+    const auto offH = this->_readReg(ALL_LED_BASE_REGISTER + 2);
+    const auto offL = this->_readReg(ALL_LED_BASE_REGISTER + 3);
 
     if(onH < 0 || onL < 0 || offH < 0 || offL < 0) {
         throw std::runtime_error("failed to read channel data");
     }
 
-    return Channel(
-        static_cast<std::uint8_t>(onH),
-        static_cast<std::uint8_t>(onL),
-        static_cast<std::uint8_t>(offH),
-        static_cast<std::uint8_t>(offL));
+    on = static_cast<std::uint16_t>(onH) << 8 |
+        static_cast<std::uint16_t>(onL);
+
+    off = static_cast<std::uint16_t>(offH) << 8 |
+        static_cast<std::uint16_t>(offL);
 
 }
 
 unsigned int PCA9685::getFrequency() {
     return 0;
     //https://github.com/adafruit/Adafruit_CircuitPython_PCA9685/blob/2ee578ab813da74d0947741a22d92d2ab8ebe62d/adafruit_pca9685.py#L134
-}
-
-void PCA9685::setChannel(const std::uint8_t channel, const unsigned short on, const unsigned short off) {
-    ::lgI2cWriteByteData(this->_handle, LED0_ON_L + 4 * channel, on & 0xff);
-    ::lgI2cWriteByteData(this->_handle, LED0_ON_H + 4 * channel, on >> 8);
-    ::lgI2cWriteByteData(this->_handle, LED0_OFF_L + 4 * channel, off & 0xff);
-    ::lgI2cWriteByteData(this->_handle, LED0_OFF_H + 4 * channel, off >> 8);
-}
-
-void setAllChannels(const unsigned short on, const unsigned short off) {
-    ::lgI2cWriteByteData(this->_handle, ALL_LED_BASE_REGISTER, on & 0xff);
-    ::lgI2cWriteByteData(this->_handle, ALL_LED_BASE_REGISTER + 1, on >> 8);
-    ::lgI2cWriteByteData(this->_handle, ALL_LED_BASE_REGISTER + 2, off & 0xff);
-    ::lgI2cWriteByteData(this->_handle, ALL_LED_BASE_REGISTER + 3, off >> 8);
 }
 
 void setFrequency(const unsigned int hz) {
@@ -141,26 +148,34 @@ void setFrequency(const unsigned int hz) {
     const auto prescale = _prescale_value(OSCILLATOR_HZ, hz);
     auto m1 = this->_getModeRegister1();
 
-    m1.setSLEEP(PowerMode::LOW_POWER);
+    m1.setSleep(PowerMode::LOW_POWER);
     this->_setModeRegister1(m1);
 
-    const auto code = ::lgI2cWriteByteData(
-        this->_handle,
-        PRE_SCALE_REGISTER,
-        prescale);
+    this->_writeReg(PRE_SCALE_REGISTER, prescale);
 
-    if(code < 0) {
-        throw std::runtime_error("failed to set prescale value");
-    }
-
-    m1.setSLEEP(PowerMode::NORMAL);
+    m1.setSleep(PowerMode::NORMAL);
     this->_setModeRegister1(m1);
 
+    //TODO: make this a non magic number
     std::this_thread::sleep_for(std::chrono::microseconds(500));
 
-    m1.setRESTART();
+    m1.setRestart();
     this->_setModeRegister1(m1);
 
+}
+
+void PCA9685::setChannel(const std::uint8_t channel, const unsigned short on, const unsigned short off) {
+    ::lgI2cWriteByteData(this->_handle, LED0_ON_L + 4 * channel, on & 0xff);
+    ::lgI2cWriteByteData(this->_handle, LED0_ON_H + 4 * channel, on >> 8);
+    ::lgI2cWriteByteData(this->_handle, LED0_OFF_L + 4 * channel, off & 0xff);
+    ::lgI2cWriteByteData(this->_handle, LED0_OFF_H + 4 * channel, off >> 8);
+}
+
+void setAllChannels(const unsigned short on, const unsigned short off) {
+    ::lgI2cWriteByteData(this->_handle, ALL_LED_BASE_REGISTER, on & 0xff);
+    ::lgI2cWriteByteData(this->_handle, ALL_LED_BASE_REGISTER + 1, on >> 8);
+    ::lgI2cWriteByteData(this->_handle, ALL_LED_BASE_REGISTER + 2, off & 0xff);
+    ::lgI2cWriteByteData(this->_handle, ALL_LED_BASE_REGISTER + 3, off >> 8);
 }
 
 static void PCA9685::reset_all(const int device) {

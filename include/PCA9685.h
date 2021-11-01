@@ -23,6 +23,7 @@
 #ifndef PCA9685_H_0D1184C8_B49E_455E_9343_0CE072650263
 #define PCA9685_H_0D1184C8_B49E_455E_9343_0CE072650263
 
+#include <bitset>
 #include <cstdint>
 
 /**
@@ -65,137 +66,129 @@ enum class OutputLogicState : std::uint8_t {
     INVERTED = 1
 };
 
-struct ModeRegister1 {
+struct Register : std::bitset<8> {
+public:
+    Register() noexcept;
+    explicit Register(const std::uint8_t v) noexcept;
+    explicit Register(const std::bitset<8>& bs) noexcept;
+    std::uint8_t toByte() const noexcept;
+};
 
+struct ModeRegister1 : public Register {
 public:
 
     ModeRegister1(const std::uint8_t val = 0b00010001) noexcept :
-        _val(val) {
+        Register(val) {
     }
 
-    bool getALLCALL() const noexcept {
-        return static_cast<bool>(this->_val & 1);
+    bool getAllCall() const noexcept {
+        return this->operator[](0);
     }
 
-    void setALLCALL(const bool respond) noexcept {
-        this->_val |= static_cast<std::uint8_t>(respond);
+    void setAllCall(const bool respond) noexcept {
+        this->operator[](0) = respond;
     }
 
-    bool getSUB3() const noexcept {
-        return static_cast<bool>((this->_val >> 1) & 1);
+    bool getSub3() const noexcept {
+        return this->operator[](1);
     }
 
-    void setSUB3(const bool respond) noexcept {
-        this->_val |= static_cast<std::uint8_t>(respond) << 1;
+    void setSub3(const bool respond) noexcept {
+        this->operator[](1) = respond;
     }
 
-    bool getSUB2() const noexcept {
-        return static_cast<bool>((this->_val >> 2) & 1);
+    bool getSub2() const noexcept {
+        return this->operator[](2);
     }
 
-    void setSUB2(const bool respond) noexcept {
-        this->_val |= static_cast<std::uint8_t>(respond) << 2;
+    void setSub2(const bool respond) noexcept {
+        this->operator[](2) = respond;
     }
 
-    bool getSUB1() const noexcept {
-        return static_cast<bool>((this->_val >> 3) & 1);
+    bool getSub1() const noexcept {
+        return this->operator[](3);
     }
 
-    void setSUB1(const bool respond) noexcept {
-        this->_val |= static_cast<std::uint8_t>(respond) << 3;
+    void setSub1(const bool respond) noexcept {
+        this->operator[](3) = respond;
     }
 
-    PowerMode getSLEEP() const noexcept {
-        return static_cast<PowerMode>((this->_val >> 4) & 1);
+    PowerMode getSleep() const noexcept {
+        return static_cast<PowerMode>(this->operator[](4));
     }
 
-    void setSLEEP(const PowerMode pm) noexcept {
-        this->_val |= static_cast<std::uint8_t>(pm) << 4;
+    void setSleep(const PowerMode pm) noexcept {
+        this->operator[](4) = static_cast<std::uint8_t>(pm);
     }
 
     AutoIncrement getAI() const noexcept {
-        return static_cast<AutoIncrement>((this->_val >> 5) & 1);
+        return static_cast<AutoIncrement>(this->operator[](5));
     }
 
     void setAI(const AutoIncrement ai) noexcept {
-        this->_val |= static_cast<std::uint8_t>(ai) << 5;
+        this->operator[](5) = static_cast<std::uint8_t>(ai);
     }
 
-    bool getEXTCLK() const noexcept {
-        return static_cast<bool>((this->_val >> 6) & 1);
+    bool getExtClk() const noexcept {
+        return this->operator[](6);
     }
 
-    void setEXTCLK(const bool use) noexcept {
-        this->_val |= static_cast<std::uint8_t>(use) << 6;
+    void setExtClk(const bool use) noexcept {
+        this->operator[](6) = static_cast<std::uint8_t>(use);
     }
 
-    bool getRESTART() const noexcept {
-        return static_cast<bool>((this->_val >> 7) & 1);
+    bool getRestart() const noexcept {
+        return this->operator[](7);
     }
 
-    void setRESTART() const noexcept {
+    void setRestart() const noexcept {
         //datasheet pg. 14
         //only a 1 bit is permitted; 0 has no effect
-        this->_val |= (1 >> 7) & 1;
+        this->operator[](7) = true;
     }
-
-    std::uint8_t getValue() const noexcept {
-        return this->_val;
-    }
-
-
-protected:
-    std::uint8_t _val;
 
 };
 
-struct ModeRegister2 {
-
+struct ModeRegister2 : public Register {
 public:
 
     ModeRegister2(const std::uint8_t val = 0b00000100) noexcept :
-        _val(val) {
+        Register(val) {
     }
 
-    OutputEnableMode getOUTNE() const noexcept {
-        return static_cast<OutputEnableMode>(this->_val & 2);
+    OutputEnableMode getOutNE() const noexcept {
+        return static_cast<OutputEnableMode>(this->toByte() & 2);
     }
 
-    void setOUTNE(const OutputEnableMode m) const noexcept {
-        this->_val |= static_cast<std::uint8_t>(m);
+    void setOutNE(const OutputEnableMode m) const noexcept {
+        const auto val = static_cast<std::uint8_t>(m);
+        this->operator[](1) = val & 0b00000010;
+        this->operator[](0) = val & 0b00000001;
     }
 
-    OutputDriverMode getOUTDRV() const noexcept {
-        return static_cast<OutputDriverMode>((this->_val >> 2) & 1);
+    OutputDriverMode getOutDRV() const noexcept {
+        return static_cast<OutputDriverMode>(this->operator[](2));
     }
 
-    void setOUTDRV(const OutputDriverMode m) const noexcept {
-        this->_val |= static_cast<std::uint8_t>(m) << 2;
+    void setOutDRV(const OutputDriverMode m) const noexcept {
+        this->operator[](2) = static_cast<std::uint8_t>(m);
     }
 
     OutputChangeMode getOCH() const noexcept {
-        return static_cast<OutputChangeMode>((this->_val >> 3) & 1);
+        return static_cast<OutputChangeMode>(this->operator[](3));
     }
 
     void setOCH(const OutputChangeMode m) const noexcept {
-        this->_val |= static_cast<std::uint8_t>(m) << 3;
+        this->operator[](3) = static_cast<std::uint8_t>(m);
     }
 
     OutputLogicState getINVRT() const noexcept {
-        return static_cast<OutputLogicState>((this->_val >> 4) & 1);
+        return static_cast<OutputLogicState>(this->operator[](4));
     }
 
     void setINVRT(const OutputLogicState s) const noexcept {
-        this->_val |= static_cast<std::uint8_t>(s) << 4;
+        this->operator[](4) = static_cast<std::uint8_t>(s);
     }
-
-    std::uint8_t getValue() const noexcept {
-        return this->_val;
-    }
-
-
-protected:
-    std::uint8_t _val;
 
 };
 
@@ -224,7 +217,6 @@ public:
     std::uint8_t getOffH() const noexcept {
         return this->_base + 3;
     }
-
 
 };
 
@@ -342,26 +334,29 @@ public:
     void connect();
     void disconnect();
 
-    Channel getChannel(const std::uint8_t channel);
-    Channel getAllChannels();
+    void getChannel(const std::uint8_t channel, std::uint16_t* const on, std::uint16_t* const off);
+    void getAllChannels(std::uint16_t* const on, std::uint16_t* const off);
+
     unsigned int getFrequency();
+    void setFrequency(const unsigned int hz);
 
     void setChannelOn(const std::uint8_t channel);
     void setChannelOff(const std::uint8_t channel);
     void setChannelPWM(const std::uint8_t channel, const std::uint16_t pwm);
 
+    std::uint16_t getChannelPWM(const std::uint8_t channel);
+
     void setAllChannelsOn();
     void setAllChannelsOff();
     void setAllChannelsPWM(const std::uint16_t pwm);
-
-    std::uint16_t getChannelPWM(const std::uint8_t channel);
-
-
     void setAllChannels(const unsigned short on, const unsigned short off);
-    void setFrequency(const unsigned int hz);
 
-    void enableSubAddress(const std::uint8_t addrNum, const std::uint8_t addr);
-    void disableSubAddress(const std::uint8_t addrNum);
+    void enableSub1Address(const std::uint8_t addr);
+    void enableSub2Address(const std::uint8_t addr);
+    void enableSub3Address(const std::uint8_t addr);
+    void disableSub1Address();
+    void disableSub2Address();
+    void disableSub3Address();
 
     void enableAllCallAddress(const std::uint8_t addr);
     void disableAllCallAddress();
@@ -393,7 +388,6 @@ protected:
 
     void _setModeRegister1(const ModeRegister1 m1) const;
     void _setModeRegister2(const ModeRegister2 m2) const;
-
 
 };
 };
