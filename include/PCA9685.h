@@ -349,7 +349,7 @@ public:
     void setAllChannelsOn();
     void setAllChannelsOff();
     void setAllChannelsPWM(const std::uint16_t pwm);
-    void setAllChannels(const unsigned short on, const unsigned short off);
+    void setAllChannels(const std::uint16_t on, const std::uint16_t off);
 
     void enableSub1Address(const std::uint8_t addr);
     void enableSub2Address(const std::uint8_t addr);

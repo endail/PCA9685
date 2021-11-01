@@ -164,18 +164,68 @@ void setFrequency(const unsigned int hz) {
 
 }
 
-void PCA9685::setChannel(const std::uint8_t channel, const unsigned short on, const unsigned short off) {
-    ::lgI2cWriteByteData(this->_handle, LED0_ON_L + 4 * channel, on & 0xff);
-    ::lgI2cWriteByteData(this->_handle, LED0_ON_H + 4 * channel, on >> 8);
-    ::lgI2cWriteByteData(this->_handle, LED0_OFF_L + 4 * channel, off & 0xff);
-    ::lgI2cWriteByteData(this->_handle, LED0_OFF_H + 4 * channel, off >> 8);
+void PCA9685::setChannelOn(const std::uint8_t channel) {
+
 }
 
-void setAllChannels(const unsigned short on, const unsigned short off) {
-    ::lgI2cWriteByteData(this->_handle, ALL_LED_BASE_REGISTER, on & 0xff);
-    ::lgI2cWriteByteData(this->_handle, ALL_LED_BASE_REGISTER + 1, on >> 8);
-    ::lgI2cWriteByteData(this->_handle, ALL_LED_BASE_REGISTER + 2, off & 0xff);
-    ::lgI2cWriteByteData(this->_handle, ALL_LED_BASE_REGISTER + 3, off >> 8);
+void PCA9685::setChannelOff(const std::uint8_t channel) {
+
+}
+
+void PCA9685::setChannelPWM(const std::uint8_t channel, const std::uint16_t pwm) {
+
+}
+
+std::uint16_t PCA9685::getChannelPWM(const std::uint8_t channel) {
+
+}
+
+void PCA9685::setAllChannelsOn() {
+
+}
+
+void PCA9685::setAllChannelsOff() {
+
+}
+
+void PCA9685::setAllChannelsPWM(const std::uint16_t pwm) {
+
+}
+
+void PCA9685::setAllChannels(const std::uint16_t on, const std::uint16_t off) {
+
+}
+
+void PCA9685::enableSub1Address(const std::uint8_t addr) {
+
+}
+
+void PCA9685::enableSub2Address(const std::uint8_t addr) {
+
+}
+
+void PCA9685::enableSub3Address(const std::uint8_t addr) {
+
+}
+
+void PCA9685::disableSub1Address() {
+
+}
+
+void PCA9685::disableSub2Address() {
+
+}
+
+void PCA9685::disableSub3Address() {
+
+}
+
+void PCA9685::enableAllCallAddress(const std::uint8_t addr) {
+
+}
+
+void PCA9685::disableAllCallAddress() {
+
 }
 
 static void PCA9685::reset_all(const int device) {
@@ -198,6 +248,9 @@ static void PCA9685::reset_all(const int device) {
     }
 
 }
+
+
+
 
 std::uint8_t PCA9685::_readReg(const std::uint8_t reg) {
 
