@@ -91,6 +91,51 @@ void PCA9685::disconnect() {
 
 }
 
+unsigned int PCA9685::getFrequency() {
+    return 0;
+    //https://github.com/adafruit/Adafruit_CircuitPython_PCA9685/blob/2ee578ab813da74d0947741a22d92d2ab8ebe62d/adafruit_pca9685.py#L134
+}
+
+void setFrequency(const unsigned int hz) {
+
+    //Writes to PRE_SCALE register are blocked when SLEEP bit is logic 0 (MODE 1).
+    //-> cannot change frequency while in normal power mode
+    //must sleep first, change frequency, then unsleep
+    //ie. https://github.com/adafruit/Adafruit_Python_PCA9685/blob/master/Adafruit_PCA9685/PCA9685.py#L94-L100
+    //The PRE_SCALE register can only be set when the SLEEP bit of MODE1 register is set to
+    //logic 1.
+
+    const auto prescale = _prescale_value(OSCILLATOR_HZ, hz);
+    auto m1 = this->_getModeRegister1();
+
+    m1.setSleep(PowerMode::LOW_POWER);
+    this->_setModeRegister1(m1);
+
+    this->_writeReg(PRE_SCALE_REGISTER, prescale);
+
+    m1.setSleep(PowerMode::NORMAL);
+    this->_setModeRegister1(m1);
+
+    //TODO: make this a non magic number
+    std::this_thread::sleep_for(std::chrono::microseconds(500));
+
+    m1.setRestart();
+    this->_setModeRegister1(m1);
+
+}
+
+void PCA9685::setChannelOn(const std::uint8_t channel) {
+    this->_writeChannelPWM(this->_getLedRegister(channel), PWM_FULL, 0);
+}
+
+void PCA9685::setChannelOff(const std::uint8_t channel) {
+    this->_writeChannelPWM(this->_getLedRegister(channel), 0, PWM_FULL);
+}
+
+void PCA9685::setChannelPWM(const std::uint8_t channel, const std::uint16_t pwm) {
+    
+}
+
 void PCA9685::getChannel(const std::uint8_t channel, std::uint16_t* const on, std::uint16_t* const off) {
 
     const auto reg = _getLedRegister(channel);
@@ -128,51 +173,6 @@ void PCA9685::getAllChannels(std::uint16_t* const on, std::uint16_t* const off) 
 
     off = static_cast<std::uint16_t>(offH) << 8 |
         static_cast<std::uint16_t>(offL);
-
-}
-
-unsigned int PCA9685::getFrequency() {
-    return 0;
-    //https://github.com/adafruit/Adafruit_CircuitPython_PCA9685/blob/2ee578ab813da74d0947741a22d92d2ab8ebe62d/adafruit_pca9685.py#L134
-}
-
-void setFrequency(const unsigned int hz) {
-
-    //Writes to PRE_SCALE register are blocked when SLEEP bit is logic 0 (MODE 1).
-    //-> cannot change frequency while in normal power mode
-    //must sleep first, change frequency, then unsleep
-    //ie. https://github.com/adafruit/Adafruit_Python_PCA9685/blob/master/Adafruit_PCA9685/PCA9685.py#L94-L100
-    //The PRE_SCALE register can only be set when the SLEEP bit of MODE1 register is set to
-    //logic 1.
-
-    const auto prescale = _prescale_value(OSCILLATOR_HZ, hz);
-    auto m1 = this->_getModeRegister1();
-
-    m1.setSleep(PowerMode::LOW_POWER);
-    this->_setModeRegister1(m1);
-
-    this->_writeReg(PRE_SCALE_REGISTER, prescale);
-
-    m1.setSleep(PowerMode::NORMAL);
-    this->_setModeRegister1(m1);
-
-    //TODO: make this a non magic number
-    std::this_thread::sleep_for(std::chrono::microseconds(500));
-
-    m1.setRestart();
-    this->_setModeRegister1(m1);
-
-}
-
-void PCA9685::setChannelOn(const std::uint8_t channel) {
-
-}
-
-void PCA9685::setChannelOff(const std::uint8_t channel) {
-
-}
-
-void PCA9685::setChannelPWM(const std::uint8_t channel, const std::uint16_t pwm) {
 
 }
 
@@ -272,6 +272,13 @@ void PCA9685::_writeReg(const std::uint8_t reg, const std::uint8_t val) {
         throw std::runtime_error("failed to write register");
     }
 
+}
+
+void PCA9685::_writeChannelPWM(const LedRegister led, const std::uint16_t phaseBegin, const std::uint16_t phaseEnd) {
+    this->_writeReg(led.getOnL(), static_cast<std::uint8_t>(phaseBegin & 0b11111111));
+    this->_writeReg(led.getOnH(), static_cast<std::uint8_t>((phaseBegin >> 8) & 0b11111111));
+    this->_writeReg(led.getOffL(), static_cast<std::uint8_t>(phaseEnd & 0b11111111));
+    this->_writeReg(led.getOffH(), static_cast<std::uint8_t>((phaseEnd >> 8) & 0b11111111));
 }
 
 std::uint8_t PCA9685::_prescale_value(const unsigned int osc_clock, const unsigned int update_rate) noexcept {

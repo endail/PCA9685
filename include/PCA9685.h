@@ -220,84 +220,6 @@ public:
 
 };
 
-struct Channel {
-
-protected:
-    std::uint8_t _onLow;
-    std::uint8_t _onHigh;
-    std::uint8_t _offLow;
-    std::uint8_t _offHigh;
-
-public:
-
-    Channel() noexcept :
-        _onLow(0),
-        _onHigh(0),
-        _offLow(0),
-        _offHigh(0) {
-    }
-
-    Channel(
-        const std::uint8_t onH,
-        const std::uint8_t onL,
-        const std::uint8_t offH,
-        const std::uint8_t offL) noexcept :
-            _onHigh(onH),
-            _onLow(onL),
-            _offHigh(offH),
-            _offLow(offL) {
-        }
-
-    std::uint16_t getOn() const noexcept {
-        return static_cast<std::uint16_t>(this->_onHigh & 0b00111111) |
-            static_cast<std::uint16_t>(this->_onLow);
-    }
-
-    std::uint16_t getOff() const noexcept {
-        return static_cast<std::uint16_t>(this->_offHigh * 0b00111111) |
-            static_cast<std::uint16_t>(this->_offLow);
-    }
-
-    void setOn(const std::uint16_t on) noexcept {
-        this->_onHigh = (on >> 8) & 0b00111111;
-        this->_onLow = on & 0xff;
-    }
-
-    void setOn(const std::uint8_t h, const std::uint8_t l) noexcept {
-        this->setOn(
-            (static_cast<std::uint16_t>(h & 0b00111111) << 8) |
-            static_cast<std::uint16_t>(l));
-    }
-
-    void setOff(const std::uint16_t off) noexcept {
-        this->_offHigh = (off >> 8) & 0b00111111;
-        this->_offLow = off & 0xff;
-    }
-
-    void setOff(const std::uint8_t h, const std::uint8_t l) noexcept {
-        this->setOff(
-            (static_cast<std::uint16_t>(h & 0b00111111) << 8) |
-            static_cast<std::uint16_t>(l));
-    }
-
-    void setOnH(const std::uint8_t h) noexcept {
-        this->_onHigh = h;
-    }
-
-    void setOnL(const std::uint8_t l) noexcept {
-        this->_onLow = l;
-    }
-
-    void setOffH(const std::uint8_t h) noexcept {
-        this->_offHigh = h;
-    }
-
-    void setOffL(const std::uint8_t l) noexcept {
-        this->_offLow = l;
-    }
-
-};
-
 class PCA9685 {
 
 public:
@@ -311,6 +233,7 @@ public:
     static const unsigned int OSCILLATOR_HZ = 25000000;
     static const std::uint8_t MIN_PRESCALE = 3;
     static const std::uint8_t MAX_PRESCALE = 255;
+    static const std::uint16_t PWM_FULL = 0x1000;
 
     static const int DEFAULT_I2C_DEVICE = 0;
     static const int DEFAULT_I2C_ADDRESS = 0x40;
@@ -338,7 +261,7 @@ public:
     void getAllChannels(std::uint16_t* const on, std::uint16_t* const off);
 
     unsigned int getFrequency();
-    void setFrequency(const unsigned int hz);
+    void setFrequency(const unsigned int hz = 200);
 
     void setChannelOn(const std::uint8_t channel);
     void setChannelOff(const std::uint8_t channel);
@@ -372,6 +295,7 @@ protected:
 
     std::uint8_t _readReg(const std::uint8_t reg);
     void _writeReg(const std::uint8_t reg, const std::uint8_t val);
+    void _writeChannelPWM(const LedRegister led, const std::uint16_t phaseBegin, const std::uint16_t phaseEnd);
 
     /**
      * 
